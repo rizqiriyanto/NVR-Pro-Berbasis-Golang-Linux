@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVR Pro Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #1f293d; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #374151; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-[#070a11] text-gray-100 min-h-screen flex flex-col md:flex-row overflow-x-hidden antialiased selection:bg-blue-600 selection:text-white">
+
+    <!-- MOBILE HEADER -->
+    <header class="md:hidden bg-gray-900/90 backdrop-blur-md border-b border-gray-800/80 p-4 flex justify-between items-center sticky top-0 z-30 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-tr from-red-600 to-rose-500 p-2 rounded-xl shadow-lg shadow-red-600/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-base font-bold tracking-wider text-white">NVR<span class="text-blue-500">PRO</span></h1>
+                <p class="text-[9px] text-gray-400 uppercase tracking-widest font-semibold">Local Server</p>
+            </div>
+        </div>
+        <button onclick="toggleMobileMenu()" aria-label="Toggle Navigation Menu" class="text-gray-300 hover:text-white p-2 rounded-lg bg-gray-800/60 border border-gray-700/50 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+        </button>
+    </header>
+
+    <div id="mobile-backdrop" onclick="toggleMobileMenu()" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden transition-opacity md:hidden"></div>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 w-72 md:w-64 bg-gray-900/95 md:bg-gray-900 border-r border-gray-800/80 flex flex-col h-full z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
+        <div class="p-6 border-b border-gray-800/80 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-red-600 to-rose-500 p-2.5 rounded-xl shadow-lg shadow-red-600/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wider text-white">NVR<span class="text-blue-500">PRO</span></h1>
+                    <p class="text-[10px] text-gray-400 uppercase tracking-widest font-medium">Local Server</p>
+                </div>
+            </div>
+            <button onclick="toggleMobileMenu()" class="md:hidden text-gray-400 hover:text-white p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <button onclick="switchTab('tab-live')" id="btn-tab-live" class="w-full flex items-center gap-3.5 px-4 py-3 bg-blue-600/15 text-blue-400 rounded-xl transition-all font-medium border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)] text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span>Live View</span>
+            </button>
+
+            <button onclick="switchTab('tab-playback')" id="btn-tab-playback" class="w-full flex items-center gap-3.5 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800/60 rounded-xl transition-all font-medium text-sm group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:text-rose-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Playback Arsip</span>
+            </button>
+
+            <button onclick="switchTab('tab-camera')" id="btn-tab-camera" class="w-full flex items-center gap-3.5 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800/60 rounded-xl transition-all font-medium text-sm group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                <span>Manajemen Kamera</span>
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-gray-800/80 shrink-0">
+            <div class="flex items-center gap-2.5 bg-gray-950/60 px-3 py-2.5 rounded-xl border border-gray-800">
+                <span class="relative flex h-2.5 w-2.5">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span class="text-xs font-medium text-gray-300">Server Running (Multi-Cam)</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 min-h-screen md:h-screen overflow-y-auto bg-[#070a11] relative p-4 md:p-8">
+        
+        <!-- TAB 1: LIVE VIEW -->
+        <div id="tab-live" class="tab-content active space-y-6">
+            <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-900/40 p-5 rounded-2xl border border-gray-800/60">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-bold text-white tracking-wide mb-1 flex items-center gap-2">
+                        <span>Live View</span>
+                        <span class="bg-red-500/10 text-red-400 text-xs px-2.5 py-0.5 rounded-full border border-red-500/20 font-medium">Real-time</span>
+                    </h2>
+                    <p class="text-xs md:text-sm text-gray-400">Pemantauan kamera secara real-time dengan HLS (Delay 3-5 detik)</p>
+                </div>
+                <button onclick="loadLiveStreams()" class="w-full sm:w-auto text-xs bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-2.5 rounded-xl transition-all border border-gray-700 flex items-center justify-center gap-2 font-medium shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Segarkan Kamera</span>
+                </button>
+            </header>
+
+            <div id="live-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+                <div class="bg-gray-900/60 aspect-video rounded-2xl border border-gray-800/80 flex flex-col items-center justify-center p-6 text-center animate-pulse">
+                    <p class="text-gray-400 text-sm font-medium">Memuat stream kamera...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: PLAYBACK ARSIP -->
+        <div id="tab-playback" class="tab-content space-y-6">
+            <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-900/40 p-5 rounded-2xl border border-gray-800/60">
+                <div>
+                    <h2 class="text-xl md:text-2xl font-bold text-white tracking-wide mb-1">Playback Arsip</h2>
+                    <p class="text-xs md:text-sm text-gray-400">Putar ulang rekaman tersimpan dari database NVR</p>
+                </div>
+                <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-3 bg-gray-900 p-2 sm:p-2.5 rounded-xl border border-gray-800">
+                    <label for="select-playback-cam" class="text-xs text-gray-400 uppercase tracking-wider font-semibold pl-2 whitespace-nowrap">Pilih Kamera:</label>
+                    <select id="select-playback-cam" onchange="fetchRecords()" class="bg-gray-950 border border-gray-700/80 text-blue-400 font-semibold text-xs sm:text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 cursor-pointer w-full sm:w-auto">
+                        <option value="">Memuat data...</option>
+                    </select>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div class="lg:col-span-3 flex flex-col">
+                    <div class="bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800/80 relative aspect-video flex items-center justify-center group">
+                        <video id="video-player" controls class="w-full h-full hidden outline-none" autoplay></video>
+                        <div id="video-placeholder" class="text-gray-500 flex flex-col items-center text-center p-6">
+                            <h3 class="text-base font-semibold text-gray-300 mb-1">Pilih Rekaman Video</h3>
+                            <p class="text-xs text-gray-500 max-w-sm">Pilih kamera di pojok kanan atas, lalu klik klip rekaman dari panel riwayat.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-900/60 rounded-2xl border border-gray-800/80 flex flex-col h-[420px] lg:h-auto">
+                    <div class="p-4 border-b border-gray-800/80 flex justify-between items-center bg-gray-900/80 rounded-t-2xl shrink-0">
+                        <h3 class="font-semibold text-gray-200 text-sm">Riwayat Video</h3>
+                        <button onclick="fetchRecords()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-colors border border-gray-700">Refresh</button>
+                    </div>
+                    <div class="overflow-y-auto flex-1 p-3 grid grid-cols-2 gap-2.5 content-start" id="record-list">
+                        <div class="col-span-2 p-6 text-center text-gray-500 text-xs">Pilih kamera untuk melihat riwayat.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: MANAJEMEN KAMERA -->
+        <div id="tab-camera" class="tab-content space-y-6">
+            <header class="bg-gray-900/40 p-5 rounded-2xl border border-gray-800/60">
+                <h2 class="text-xl md:text-2xl font-bold text-white tracking-wide mb-1">Manajemen Kamera & Penyimpanan</h2>
+                <p class="text-xs md:text-sm text-gray-400">Atur lokasi direktori penyimpanan hardisk dan tambahkan kamera RTSP baru</p>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- FORM STORAGE -->
+                <div class="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5 md:p-6 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-semibold text-white mb-2 flex items-center gap-2.5 text-base">
+                            <div class="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8-4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                                </svg>
+                            </div>
+                            Lokasi Penyimpanan Hardisk
+                        </h3>
+                        <p class="text-xs text-gray-400 mb-4 leading-relaxed">Tentukan direktori folder atau hardisk eksternal tempat video CCTV disimpan.</p>
+                        
+                        <div class="space-y-3">
+                            <label for="input-storage-path" class="text-xs font-medium text-gray-300">Storage Path:</label>
+                            <input type="text" id="input-storage-path" class="w-full bg-gray-950 border border-gray-700/80 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500 font-mono transition-colors" placeholder="./records">
+                            <div id="storage-msg" class="text-xs hidden font-medium"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="updateStoragePath()" class="mt-6 w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-amber-600/20 text-sm">
+                        Simpan Perubahan Path
+                    </button>
+                </div>
+
+                <!-- FORM ADD CAM -->
+                <div class="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5 md:p-6 shadow-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-semibold text-white mb-2 flex items-center gap-2.5 text-base">
+                            <div class="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </div>
+                            Tambah Kamera Baru
+                        </h3>
+                        <p class="text-xs text-gray-400 mb-4 leading-relaxed">Daftarkan kamera IP/RTSP baru ke dalam database SQLite.</p>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label for="input-cam-name" class="text-xs font-medium text-gray-300">Nama Kamera:</label>
+                                <input type="text" id="input-cam-name" class="mt-1 w-full bg-gray-950 border border-gray-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors" placeholder="Cth: Kamera Halaman Depan">
+                            </div>
+                            <div>
+                                <label for="input-cam-url" class="text-xs font-medium text-gray-300">RTSP Stream URL:</label>
+                                <input type="text" id="input-cam-url" class="mt-1 w-full bg-gray-950 border border-gray-700/80 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500 font-mono text-xs transition-colors" placeholder="rtsp://admin:pass@192.168.1.10/stream">
+                            </div>
+                            <div id="form-msg" class="text-xs hidden font-medium"></div>
+                        </div>
+                    </div>
+
+                    <button onclick="addCamera()" class="mt-6 w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-medium py-2.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 text-sm">
+                        Simpan & Daftarkan Kamera
+                    </button>
+                </div>
+            </div>
+            
+            <!-- REGISTERED CAMERAS TABLE -->
+            <div class="bg-gray-900/60 border border-gray-800/80 rounded-2xl p-5 md:p-6 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-white text-base">Kamera Terdaftar</h3>
+                    <button onclick="loadCameras()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg transition-colors border border-gray-700">Refresh Tabel</button>
+                </div>
+                <div class="overflow-x-auto border border-gray-800 rounded-xl">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead class="text-gray-400 bg-gray-950/80 border-b border-gray-800 text-xs uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3.5 px-4 font-semibold">ID</th>
+                                <th class="py-3.5 px-4 font-semibold">Nama Kamera</th>
+                                <th class="py-3.5 px-4 font-semibold">Status</th>
+                                <th class="py-3.5 px-4 font-semibold">RTSP URL</th>
+                                <th class="py-3.5 px-4 font-semibold text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="camera-table-body" class="divide-y divide-gray-800/80 text-gray-300">
+                            <tr><td colspan="5" class="text-center py-6 text-gray-500 text-xs">Memuat data kamera...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div id="delete-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center gap-3 text-red-400">
+                <div class="p-2.5 bg-red-500/10 rounded-xl border border-red-500/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white">Hapus Kamera</h3>
+                    <p class="text-xs text-gray-400">Tindakan ini tidak dapat dibatalkan</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-300 leading-relaxed">Apakah Anda yakin ingin menghapus <span id="delete-cam-name" class="font-bold text-red-400"></span> dari database NVR?</p>
+            <div class="flex justify-end gap-3 pt-2">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-xs font-medium rounded-xl border border-gray-700 transition-colors">Batal</button>
+                <button id="btn-confirm-delete" onclick="executeDeleteCamera()" class="px-4 py-2 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-red-600/20 transition-all">Hapus Kamera</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let hlsInstances = [];
+        let targetCamIdToDelete = null;
+
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('mobile-backdrop');
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            if (isOpen) {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            } else {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+
+            const btnIds = ['btn-tab-live', 'btn-tab-playback', 'btn-tab-camera'];
+            btnIds.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.className = "w-full flex items-center gap-3.5 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800/60 rounded-xl transition-all font-medium text-sm group";
+            });
+
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) activeBtn.className = "w-full flex items-center gap-3.5 px-4 py-3 bg-blue-600/15 text-blue-400 rounded-xl transition-all font-medium border border-blue-500/30 shadow-[0_0_15px_rgba(59,130,246,0.15)] text-sm";
+        
+            if (tabId === 'tab-live') loadLiveStreams();
+            if (tabId === 'tab-camera') loadSettings();
+
+            if (window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                const backdrop = document.getElementById('mobile-backdrop');
+                if (sidebar) sidebar.classList.add('-translate-x-full');
+                if (backdrop) backdrop.classList.add('hidden');
+            }
+        }
+
+        function destroyHlsInstances() {
+            hlsInstances.forEach(hls => {
+                try { hls.destroy(); } catch (e) {}
+            });
+            hlsInstances = [];
+        }
+
+        async function loadLiveStreams() {
+            destroyHlsInstances();
+            const grid = document.getElementById('live-grid');
+            if (!grid) return;
+
+            try {
+                const res = await fetch('/api/cameras');
+                if (!res.ok) throw new Error("API error");
+                const cameras = await res.json();
+                grid.innerHTML = '';
+
+                if (!cameras || cameras.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full p-12 text-center text-gray-500 border border-dashed border-gray-800 rounded-2xl bg-gray-900/30">
+                            <p class="text-sm font-medium mb-1">Belum ada kamera yang terdaftar.</p>
+                            <p class="text-xs text-gray-600">Buka menu Manajemen Kamera untuk mendaftarkan kamera RTSP pertama Anda.</p>
+                        </div>`;
+                    return;
+                }
+
+                cameras.forEach(cam => {
+                    const camDiv = document.createElement('div');
+                    camDiv.className = "bg-black aspect-video rounded-2xl border border-gray-800/80 overflow-hidden relative shadow-xl group";
+                    camDiv.innerHTML = `
+                        <div class="absolute top-3 left-3 bg-gray-950/80 backdrop-blur-md px-3 py-1.5 rounded-xl text-xs font-bold text-white z-10 flex items-center gap-2 border border-white/10 shadow-lg">
+                            <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                            <span>${cam.Name}</span>
+                        </div>
+                        <video id="hls-video-${cam.ID}" class="w-full h-full object-cover" autoplay muted playsinline controls></video>
+                    `;
+                    grid.appendChild(camDiv);
+
+                    const video = document.getElementById(`hls-video-${cam.ID}`);
+                    const streamSrc = `/streams/cam_${cam.ID}/index.m3u8`;
+
+                    if (Hls.isSupported()) {
+                        const hls = new Hls({ 
+                            manifestLoadingMaxRetry: 10, 
+                            manifestLoadingRetryDelay: 2000,
+                            fragLoadingMaxRetry: 10
+                        });
+                        hls.loadSource(streamSrc);
+                        hls.attachMedia(video);
+
+                        hls.on(Hls.Events.ERROR, function(event, data) {
+                            if (data.fatal) {
+                                switch (data.type) {
+                                    case Hls.ErrorTypes.NETWORK_ERROR:
+                                        setTimeout(() => hls.startLoad(), 2000);
+                                        break;
+                                    case Hls.ErrorTypes.MEDIA_ERROR:
+                                        hls.recoverMediaError();
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                        });
+
+                        hlsInstances.push(hls);
+                    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                        video.src = streamSrc;
+                    }
+                });
+            } catch (e) {
+                console.log("Error loading streams:", e);
+            }
+        }
+
+        function playVideo(filepath) {
+            const player = document.getElementById('video-player');
+            const placeholder = document.getElementById('video-placeholder');
+            if (placeholder) placeholder.classList.add('hidden');
+            if (player) {
+                player.classList.remove('hidden');
+                player.src = `/records/${filepath}`;
+                player.play().catch(e => console.log("Auto-play blocked:", e));
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.StoragePath) {
+                        document.getElementById('input-storage-path').value = data.StoragePath;
+                    }
+                }
+            } catch (e) { console.log(e); }
+            loadCameras();
+        }
+
+        async function updateStoragePath() {
+            const path = document.getElementById('input-storage-path').value;
+            const msg = document.getElementById('storage-msg');
+            if (!path) return;
+
+            try {
+                const res = await fetch('/api/settings/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ StoragePath: path })
+                });
+                if (res.ok) {
+                    msg.textContent = "✅ Path penyimpanan diperbarui! (Silakan restart server agar perekaman beralih ke folder baru)";
+                    msg.className = "text-emerald-400 text-xs font-medium block mt-2";
+                } else {
+                    throw new Error();
+                }
+            } catch (e) {
+                msg.textContent = "❌ Gagal memperbarui path penyimpanan.";
+                msg.className = "text-rose-400 text-xs font-medium block mt-2";
+            }
+        }
+
+        async function loadCameras() {
+            try {
+                const res = await fetch('/api/cameras');
+                if (!res.ok) throw new Error();
+                const cameras = await res.json();
+                const tableBody = document.getElementById('camera-table-body');
+                const dropdown = document.getElementById('select-playback-cam');
+                
+                if (tableBody) tableBody.innerHTML = '';
+                if (dropdown) dropdown.innerHTML = '';
+
+                if (!cameras || cameras.length === 0) {
+                    if (tableBody) tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-gray-500 text-xs">Belum ada kamera terdaftar.</td></tr>`;
+                    if (dropdown) dropdown.innerHTML = `<option value="">Belum ada kamera</option>`;
+                    return;
+                }
+
+                cameras.forEach(cam => {
+                    const safeName = cam.Name.replace(/'/g, "\\'");
+                    if (tableBody) {
+                        tableBody.innerHTML += `
+                            <tr class="hover:bg-gray-800/40 transition-colors">
+                                <td class="py-3.5 px-4 font-mono text-xs text-gray-400">#${cam.ID}</td>
+                                <td class="py-3.5 px-4 font-medium text-white">${cam.Name}</td>
+                                <td class="py-3.5 px-4 text-emerald-400 font-medium text-xs">
+                                    <span class="inline-flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                        Merekam
+                                    </span>
+                                </td>
+                                <td class="py-3.5 px-4 text-xs font-mono text-gray-400 max-w-[220px] truncate" title="${cam.RTSPURL}">${cam.RTSPURL}</td>
+                                <td class="py-3.5 px-4 text-right">
+                                    <button onclick="confirmDeleteCamera(${cam.ID}, '${safeName}')" class="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg transition-all font-medium">
+                                        Hapus
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    if (dropdown) {
+                        dropdown.innerHTML += `<option value="${cam.ID}">${cam.Name} (Cam ${cam.ID})</option>`;
+                    }
+                });
+                fetchRecords();
+            } catch (e) {
+                console.log("Error loading cameras:", e);
+            }
+        }
+
+        function confirmDeleteCamera(id, name) {
+            targetCamIdToDelete = id;
+            const nameSpan = document.getElementById('delete-cam-name');
+            if (nameSpan) nameSpan.textContent = name;
+            const modal = document.getElementById('delete-modal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            targetCamIdToDelete = null;
+            const modal = document.getElementById('delete-modal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function executeDeleteCamera() {
+            if (!targetCamIdToDelete) return;
+            try {
+                const res = await fetch('/api/cameras/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: targetCamIdToDelete })
+                });
+
+                if (res.ok) {
+                    closeDeleteModal();
+                    loadCameras();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchRecords() {
+            const dropdown = document.getElementById('select-playback-cam');
+            if (!dropdown) return;
+            const camId = dropdown.value;
+            const list = document.getElementById('record-list');
+            if (!list) return;
+
+            if (!camId) {
+                list.innerHTML = `<div class="col-span-2 p-6 text-center text-gray-500 text-xs">Pilih kamera terlebih dahulu.</div>`;
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/records?cam_id=${camId}`);
+                if (!response.ok) throw new Error();
+                const files = await response.json();
+                list.innerHTML = ''; 
+
+                if (!files || files.length === 0) {
+                    list.innerHTML = `<div class="col-span-2 p-6 text-center text-gray-500 text-xs">Belum ada arsip video untuk kamera ini.</div>`;
+                    return;
+                }
+
+                files.sort((a, b) => b.localeCompare(a));
+                files.forEach(filepath => {
+                    const filename = filepath.split('/').pop();
+                    let timeDisplay = filename;
+                    let dateDisplay = "";
+                    try {
+                        const parts = filename.replace('.mp4', '').split('-');
+                        if (parts.length === 3) {
+                            timeDisplay = `${parts[2].substring(0,2)}:${parts[2].substring(2,4)}`;
+                            dateDisplay = `${parts[1].substring(6,8)}/${parts[1].substring(4,6)}/${parts[1].substring(0,4)}`;
+                        }
+                    } catch (e) {}
+
+                    const item = document.createElement('div');
+                    item.className = "bg-gray-950 border border-gray-800 hover:border-blue-500/80 rounded-xl p-3 cursor-pointer text-center flex flex-col items-center gap-1 transition-all group";
+                    item.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500 group-hover:text-blue-400 transition-colors" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                        </svg>
+                        <span class="text-xs font-bold text-gray-200 group-hover:text-white">${timeDisplay}</span>
+                        <span class="text-[10px] text-gray-500">${dateDisplay}</span>
+                    `;
+                    item.onclick = () => playVideo(filepath);
+                    list.appendChild(item);
+                });
+            } catch (error) {
+                list.innerHTML = `<div class="col-span-2 p-6 text-center text-rose-400 text-xs">Gagal memuat arsip video.</div>`;
+            }
+        }
+
+        async function addCamera() {
+            const nameInput = document.getElementById('input-cam-name');
+            const urlInput = document.getElementById('input-cam-url');
+            const msgBox = document.getElementById('form-msg');
+            
+            if (!nameInput || !urlInput) return;
+            const name = nameInput.value;
+            const url = urlInput.value;
+            
+            if (!name || !url) {
+                if (msgBox) {
+                    msgBox.textContent = "⚠️ Nama dan URL RTSP wajib diisi!";
+                    msgBox.className = "text-amber-400 text-xs font-medium block mt-2";
+                }
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/cameras/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Name: name, RTSPURL: url })
+                });
+
+                if (res.ok) {
+                    if (msgBox) {
+                        msgBox.textContent = "✅ Kamera berhasil disimpan dan mulai merekam!";
+                        msgBox.className = "text-emerald-400 text-xs font-medium block mt-2";
+                    }
+                    nameInput.value = '';
+                    urlInput.value = '';
+                    loadCameras();
+                }
+            } catch (e) {
+                if (msgBox) {
+                    msgBox.textContent = "❌ Gagal menyimpan kamera baru.";
+                    msgBox.className = "text-rose-400 text-xs font-medium block mt-2";
+                }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadCameras();
+            loadLiveStreams();
+        });
+    </script>
+</body>
+</html>

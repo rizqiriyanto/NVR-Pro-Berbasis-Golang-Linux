@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVR Pro Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #111827; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-950 min-h-screen text-gray-100 flex overflow-hidden">
+
+    <aside class="w-64 bg-gray-900 border-r border-gray-800 flex flex-col h-screen shrink-0">
+        <div class="p-6 border-b border-gray-800 flex items-center gap-3">
+            <div class="bg-red-600 p-2 rounded-lg shadow-lg shadow-red-600/20">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-wider">NVR<span class="text-blue-500">PRO</span></h1>
+                <p class="text-[10px] text-gray-400 uppercase tracking-widest">Local Server</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-2">
+            <button onclick="switchTab('tab-live')" id="btn-tab-live" class="w-full flex items-center gap-3 px-4 py-3 bg-blue-600/10 text-blue-500 rounded-xl transition-all font-medium border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                Live View
+            </button>
+            <button onclick="switchTab('tab-playback')" id="btn-tab-playback" class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all font-medium group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:text-red-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Playback Arsip
+            </button>
+            <button onclick="switchTab('tab-camera')" id="btn-tab-camera" class="w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all font-medium group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 group-hover:text-green-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                Manajemen Kamera
+            </button>
+        </nav>
+
+        <div class="p-6 border-t border-gray-800">
+            <div class="flex items-center gap-2 bg-gray-800/50 px-3 py-2 rounded-lg border border-gray-700/50">
+                <span class="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.8)] animate-pulse"></span>
+                <span class="text-xs font-semibold text-gray-300">Server Running (Multi-Cam)</span>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 h-screen overflow-y-auto bg-[#0a0a0f] relative">
+        
+        <!-- TAB 1: LIVE VIEW -->
+        <div id="tab-live" class="tab-content active p-6">
+            <header class="mb-6 flex justify-between items-end">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-1">Live View</h2>
+                    <p class="text-sm text-gray-500">Pemantauan kamera secara real-time dengan HLS (Delay 3-5 detik)</p>
+                </div>
+                <button onclick="loadLiveStreams()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-400 px-3 py-1.5 rounded transition-colors border border-gray-700 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    Segarkan Kamera
+                </button>
+            </header>
+            <!-- Wadah untuk video otomatis -->
+            <div id="live-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-gray-900 aspect-video rounded-xl border border-gray-800 flex items-center justify-center">
+                    <p class="text-gray-500 text-sm animate-pulse">Memuat stream kamera...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: PLAYBACK -->
+        <div id="tab-playback" class="tab-content p-6">
+            <header class="mb-6 flex justify-between items-end">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-1">Playback Arsip</h2>
+                    <p class="text-sm text-gray-500">Putar ulang rekaman dari database</p>
+                </div>
+                <div class="text-right flex items-center gap-3">
+                    <p class="text-xs text-gray-500 uppercase tracking-widest">Kamera Aktif:</p>
+                    <select id="select-playback-cam" onchange="fetchRecords()" class="bg-gray-900 border border-gray-700 text-blue-400 font-semibold text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 cursor-pointer shadow-lg">
+                        <option value="1">Memuat data...</option>
+                    </select>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Video Player Area -->
+                <div class="lg:col-span-3 flex flex-col">
+                    <div class="bg-black rounded-xl overflow-hidden shadow-2xl border border-gray-800 relative aspect-video flex items-center justify-center">
+                        <video id="video-player" controls class="w-full h-full hidden outline-none" autoplay></video>
+                        
+                        <div id="video-placeholder" class="text-gray-500 flex flex-col items-center text-center p-6">
+                            <div class="bg-gray-900 border border-gray-800 p-4 rounded-full mb-4 shadow-inner">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-400 mb-1">Pilih Rekaman</h3>
+                            <p class="text-xs text-gray-600 max-w-sm">Pilih kamera di pojok kanan atas, lalu klik file dari panel kanan.</p>
+                        </div>
+
+                        <div id="now-playing-badge" class="absolute top-4 left-4 bg-black/80 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/10 hidden shadow-xl">
+                            Sedang Diputar: <span id="now-playing-text" class="text-blue-400"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List Video -->
+                <div class="bg-gray-900 rounded-xl border border-gray-800 flex flex-col h-[600px]">
+                    <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50 rounded-t-xl">
+                        <h3 class="font-semibold text-gray-300 text-sm">Riwayat Video</h3>
+                        <button onclick="fetchRecords()" class="text-xs bg-gray-800 hover:bg-gray-700 text-gray-400 px-2 py-1 rounded transition-colors border border-gray-700">Refresh</button>
+                    </div>
+                    <div class="overflow-y-auto flex-1 p-3 grid grid-cols-2 gap-3 content-start" id="record-list">
+                        <!-- Otomatis diisi -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: MANAJEMEN KAMERA -->
+        <div id="tab-camera" class="tab-content p-6">
+            <header class="mb-6">
+                <h2 class="text-2xl font-bold text-white mb-1">Manajemen Kamera</h2>
+                <p class="text-sm text-gray-500">Tambah kamera baru ke dalam database SQLite</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl">
+                    <h3 class="font-semibold text-white mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+                        Tambah Kamera Baru
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Nama Kamera</label>
+                            <input type="text" id="input-cam-name" class="w-full bg-black border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="Cth: Kamera Garasi">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">URL RTSP Stream</label>
+                            <input type="text" id="input-cam-url" class="w-full bg-black border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="rtsp://admin:pass@192.168.1.10/stream">
+                        </div>
+                        <div id="form-msg" class="text-xs hidden"></div>
+                        <button id="btn-save-cam" onclick="addCamera()" class="w-full mt-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg transition-colors shadow-lg shadow-blue-500/20">
+                            Simpan Kamera
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 bg-gray-900 border border-gray-800 rounded-xl p-6 shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-white">Kamera Terdaftar</h3>
+                    <button onclick="loadCameras()" class="text-xs bg-gray-800 text-gray-400 px-3 py-1 rounded hover:text-white">Refresh Tabel</button>
+                </div>
+                <div class="overflow-x-auto border border-gray-800 rounded-lg">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-gray-400 bg-black/40 border-b border-gray-800">
+                            <tr>
+                                <th class="py-3 px-4 font-medium">ID</th>
+                                <th class="py-3 px-4 font-medium">Nama Kamera</th>
+                                <th class="py-3 px-4 font-medium">Status</th>
+                                <th class="py-3 px-4 font-medium">RTSP URL</th>
+                            </tr>
+                        </thead>
+                        <tbody id="camera-table-body" class="divide-y divide-gray-800 text-gray-300">
+                            <tr><td colspan="4" class="text-center py-4">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Fungsi Tab
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+
+            const btnIds = ['btn-tab-live', 'btn-tab-playback', 'btn-tab-camera'];
+            btnIds.forEach(id => {
+                document.getElementById(id).className = "w-full flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-800 rounded-xl transition-all font-medium group";
+            });
+
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.className = "w-full flex items-center gap-3 px-4 py-3 bg-blue-600/10 text-blue-500 rounded-xl transition-all font-medium border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]";
+        
+            if(tabId === 'tab-live') {
+                loadLiveStreams();
+            }
+        }
+
+        // Fungsi Pemutar Rekaman (Playback)
+        function playVideo(filepath) {
+            const player = document.getElementById('video-player');
+            const placeholder = document.getElementById('video-placeholder');
+            const badge = document.getElementById('now-playing-badge');
+            
+            const filename = filepath.split('/').pop();
+
+            placeholder.classList.add('hidden');
+            player.classList.remove('hidden');
+            badge.classList.remove('hidden');
+
+            player.src = `/records/${filepath}`;
+            document.getElementById('now-playing-text').textContent = filename;
+            player.play();
+        }
+
+        async function loadLiveStreams() {
+            try {
+                const res = await fetch('/api/cameras');
+                const cameras = await res.json();
+                
+                const grid = document.getElementById('live-grid');
+                grid.innerHTML = ''; // Bersihkan placeholder
+
+                if (!cameras || cameras.length === 0) {
+                    grid.innerHTML = `<div class="col-span-2 text-center text-gray-500 p-10 border border-dashed border-gray-800 rounded-xl">Belum ada kamera untuk dipantau.</div>`;
+                    return;
+                }
+
+                cameras.forEach(cam => {
+                    // Buat kotak kamera
+                    const camDiv = document.createElement('div');
+                    camDiv.className = "bg-black aspect-video rounded-xl border border-gray-800 overflow-hidden relative shadow-lg group";
+                    camDiv.innerHTML = `
+                        <div class="absolute top-3 left-3 bg-black/70 backdrop-blur px-2.5 py-1.5 rounded-lg text-xs font-bold text-white z-10 flex items-center gap-2 border border-white/10">
+                            <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                            ${cam.Name}
+                        </div>
+                        <video id="hls-video-${cam.ID}" class="w-full h-full object-cover" autoplay muted></video>
+                    `;
+                    grid.appendChild(camDiv);
+
+                    // Pasang HLS.js ke video
+                    const video = document.getElementById(`hls-video-${cam.ID}`);
+                    const streamSrc = `/streams/cam_${cam.ID}/index.m3u8`;
+
+                    if (Hls.isSupported()) {
+                        const hls = new Hls({
+                            manifestLoadingMaxRetry: 5,
+                            manifestLoadingRetryDelay: 2000,
+                        });
+                        hls.loadSource(streamSrc);
+                        hls.attachMedia(video);
+                        hls.on(Hls.Events.ERROR, function (event, data) {
+                            if (data.fatal) {
+                                console.log("HLS Error on Cam " + cam.ID + ", retrying...");
+                                hls.startLoad();
+                            }
+                        });
+                    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                        // Untuk Safari Apple
+                        video.src = streamSrc;
+                    }
+                });
+            } catch (e) {
+                console.log("Gagal memuat stream", e);
+            }
+        }
+
+        async function loadCameras() {
+            try {
+                const res = await fetch('/api/cameras');
+                const cameras = await res.json();
+                
+                const tableBody = document.getElementById('camera-table-body');
+                const dropdown = document.getElementById('select-playback-cam');
+                
+                tableBody.innerHTML = '';
+                dropdown.innerHTML = '';
+
+                if (!cameras || cameras.length === 0) return;
+
+                cameras.forEach(cam => {
+                    const badge = cam.Status === 'recording' ? `<span class="text-green-500">Merekam</span>` : `<span class="text-red-500">Offline</span>`;
+                    tableBody.innerHTML += `
+                        <tr class="hover:bg-gray-800/50">
+                            <td class="py-3 px-4">#${cam.ID}</td>
+                            <td class="py-3 px-4 font-medium">${cam.Name}</td>
+                            <td class="py-3 px-4">${badge}</td>
+                            <td class="py-3 px-4 text-xs font-mono text-gray-500">${cam.RTSPURL}</td>
+                        </tr>
+                    `;
+                    dropdown.innerHTML += `<option value="${cam.ID}">${cam.Name} (Cam ${cam.ID})</option>`;
+                });
+                
+                fetchRecords();
+            } catch(e) { console.log(e); }
+        }
+
+        async function fetchRecords() {
+            const camId = document.getElementById('select-playback-cam').value;
+            if(!camId) return;
+
+            try {
+                const response = await fetch(`/api/records?cam_id=${camId}`);
+                const files = await response.json();
+                
+                const list = document.getElementById('record-list');
+                list.innerHTML = ''; 
+
+                if(!files || files.length === 0) {
+                    list.innerHTML = `<div class="col-span-2 p-8 text-center text-red-500 text-sm">Gagal memuat arsip atau arsip kosong.</div>`;
+                    return;
+                }
+
+                files.sort((a, b) => b.localeCompare(a));
+
+                files.forEach(filepath => {
+                    const filename = filepath.split('/').pop();
+                    let timeDisplay = filename;
+                    let dateDisplay = "";
+                    try {
+                        const parts = filename.replace('.mp4', '').split('-');
+                        if(parts.length === 3) {
+                            timeDisplay = `${parts[2].substring(0,2)}:${parts[2].substring(2,4)}`;
+                            dateDisplay = `${parts[1].substring(6,8)}/${parts[1].substring(4,6)}/${parts[1].substring(0,4)}`;
+                        }
+                    } catch(e) {}
+
+                    const item = document.createElement('div');
+                    item.className = "bg-black border border-gray-800 hover:border-blue-500 rounded-xl p-3 cursor-pointer text-center flex flex-col items-center gap-1";
+                    item.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                        <span class="text-sm font-bold text-gray-300">${timeDisplay}</span>
+                        <span class="text-[10px] text-gray-500">${dateDisplay}</span>
+                    `;
+                    item.onclick = () => playVideo(filepath);
+                    list.appendChild(item);
+                });
+            } catch (error) {
+                document.getElementById('record-list').innerHTML = `<div class="col-span-2 p-4 text-center text-red-500 text-sm">Gagal memuat arsip.</div>`;
+            }
+        }
+
+        async function addCamera() {
+            const name = document.getElementById('input-cam-name').value;
+            const url = document.getElementById('input-cam-url').value;
+            const msgBox = document.getElementById('form-msg');
+            
+            if(!name || !url) return;
+            
+            await fetch('/api/cameras/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Name: name, RTSPURL: url })
+            });
+            msgBox.textContent = "✅ Tersimpan! Silakan Refresh halaman.";
+            msgBox.className = "text-green-400 text-xs font-medium block";
+        }
+
+        // Inisialisasi awal
+        window.onload = () => {
+            loadCameras();
+            loadLiveStreams();
+        };
+    </script>
+</body>
+</html>
