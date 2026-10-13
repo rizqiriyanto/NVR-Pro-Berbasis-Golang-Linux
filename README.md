@@ -75,7 +75,7 @@ ffmpeg -version
 ### Step 2: Clone & Inisialisasi Proyek
 ```bash
 # Clone repository ini (atau buat folder jika belum di-push)
-git clone https://github.com/USERNAME_ANDA/nvr-rumah.git
+git clone https://github.com/rizqiriyanto/nvr-rumah.git
 cd nvr-rumah
 
 # Download dependensi Golang
